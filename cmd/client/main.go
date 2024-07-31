@@ -1,77 +1,41 @@
 package main
 
 import (
-	"bufio"
 	"context"
-	"fmt"
+	"flag"
 	"log"
-	hellopb "mygrpc/pkg/grpc"
-	"os"
+	"time"
 
+	pb "github.com/kanaru-ssk/grpc-sample/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+const (
+	defaultName = "world"
+)
+
 var (
-	scanner *bufio.Scanner
-	client  hellopb.GreetingServiceClient
+	addr = flag.String("addr", "localhost:50051", "the address to connect to")
+	name = flag.String("name", defaultName, "Name to greet")
 )
 
 func main() {
-	fmt.Println("start gRPC Client.")
-
-	// 1. 標準入力から文字列を受け取るスキャナを用意
-	scanner = bufio.NewScanner(os.Stdin)
-
-	// 2. gRPCサーバーとのコネクションを確立
-	address := "localhost:8080"
-	conn, err := grpc.Dial(
-		address,
-
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
-	)
+	flag.Parse()
+	// Set up a connection to the server.
+	conn, err := grpc.NewClient(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatal("Connection failed.")
-		return
+		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
+	c := pb.NewGreeterClient(conn)
 
-	// 3. gRPCクライアントを生成
-	client = hellopb.NewGreetingServiceClient(conn)
-
-	for {
-		fmt.Println("1: send Request")
-		fmt.Println("2: exit")
-		fmt.Print("please enter >")
-
-		scanner.Scan()
-		in := scanner.Text()
-
-		switch in {
-		case "1":
-			Hello()
-
-		case "2":
-			fmt.Println("bye.")
-			goto M
-		}
-	}
-M:
-}
-
-func Hello() {
-	fmt.Println("Please enter your name.")
-	scanner.Scan()
-	name := scanner.Text()
-
-	req := &hellopb.HelloRequest{
-		Name: name,
-	}
-	res, err := client.Hello(context.Background(), req)
+	// Contact the server and print out its response.
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: *name})
 	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println(res.GetMessage())
+		log.Fatalf("could not greet: %v", err)
 	}
+	log.Printf("Greeting: %s", r.GetMessage())
 }

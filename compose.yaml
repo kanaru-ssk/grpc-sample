@@ -1,0 +1,28 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: "server"
+    ports:
+      - "50051:50051"
+    develop:
+      watch:
+        - action: rebuild
+          path: ./cmd/server
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: "client"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - server
+    develop:
+      watch:
+        - action: rebuild
+          path: ./cmd/client

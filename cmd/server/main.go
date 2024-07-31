@@ -1,64 +1,41 @@
 package main
 
 import (
-	// (一部抜粋)
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"net"
-	"os"
-	"os/signal"
 
-	hellopb "mygrpc/pkg/grpc"
-
+	pb "github.com/kanaru-ssk/grpc-sample/proto"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 )
 
+var (
+	port = flag.Int("port", 50051, "The server port")
+)
+
+// server is used to implement hello.GreeterServer.
+type server struct {
+	pb.UnimplementedGreeterServer
+}
+
+// SayHello implements hello.GreeterServer
+func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+	log.Printf("Received: %v", in.GetName())
+	return &pb.HelloReply{Message: "Hello " + in.GetName()}, nil
+}
+
 func main() {
-	// 1. 8080番portのLisnterを作成
-	port := 8080
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	flag.Parse()
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to listen: %v", err)
 	}
-
-	// 2. gRPCサーバーを作成
 	s := grpc.NewServer()
-
-	// 3. gRPCサーバーにGreetingServiceを登録
-	hellopb.RegisterGreetingServiceServer(s, NewMyServer())
-
-	// 4. サーバーリフレクションの設定
-	reflection.Register(s)
-
-	// 5. 作成したgRPCサーバーを、8080番ポートで稼働させる
-	go func() {
-		log.Printf("start gRPC server port: %v", port)
-		s.Serve(listener)
-	}()
-
-	// 6.Ctrl+Cが入力されたらGraceful shutdownされるようにする
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
-	<-quit
-	log.Println("stopping gRPC server...")
-	s.GracefulStop()
-}
-
-type myServer struct {
-	hellopb.UnimplementedGreetingServiceServer
-}
-
-func (s *myServer) Hello(ctx context.Context, req *hellopb.HelloRequest) (*hellopb.HelloResponse, error) {
-	// リクエストからnameフィールドを取り出して
-	// "Hello, [名前]!"というレスポンスを返す
-	return &hellopb.HelloResponse{
-		Message: fmt.Sprintf("Hello, %s!", req.GetName()),
-	}, nil
-}
-
-// 自作サービス構造体のコンストラクタを定義
-func NewMyServer() *myServer {
-	return &myServer{}
+	pb.RegisterGreeterServer(s, &server{})
+	log.Printf("server listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 }
