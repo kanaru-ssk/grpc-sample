@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -38,12 +40,28 @@ func main() {
 	defer conn.Close()
 	c := pb.NewGreeterClient(conn)
 
-	// Contact the server and print out its response.
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: *name})
-	if err != nil {
-		log.Fatalf("could not greet: %v", err)
+	// Set up HTTP server
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		// Use the name from the query parameter if provided, otherwise use the default
+		nameToGreet := r.URL.Query().Get("name")
+		if nameToGreet == "" {
+			nameToGreet = *name
+		}
+
+		s, err := c.SayHello(ctx, &pb.HelloRequest{Name: nameToGreet})
+		if err != nil {
+			http.Error(w, fmt.Sprintf("could not greet: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprintf(w, "Greeting: %s", s.GetMessage())
+	})
+
+	log.Println("Starting HTTP server on :8000")
+	if err := http.ListenAndServe(":8000", nil); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
 	}
-	log.Printf("Greeting: %s", r.GetMessage())
 }
