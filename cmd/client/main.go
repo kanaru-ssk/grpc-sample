@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"log"
+	"os"
 	"time"
 
 	pb "github.com/kanaru-ssk/grpc-sample/proto"
@@ -13,17 +14,24 @@ import (
 
 const (
 	defaultName = "world"
+	defaultAddr = "server:50051"
 )
 
 var (
-	addr = flag.String("addr", "localhost:50051", "the address to connect to")
 	name = flag.String("name", defaultName, "Name to greet")
 )
 
 func main() {
 	flag.Parse()
+
+	// Get the server address from the environment variable or use the default
+	addr := os.Getenv("SERVER_URL")
+	if addr == "" {
+		addr = defaultAddr
+	}
+
 	// Set up a connection to the server.
-	conn, err := grpc.NewClient(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
