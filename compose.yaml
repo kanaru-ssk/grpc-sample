@@ -4,9 +4,11 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        SERVICE: "server"
+        SERVICE: server
     ports:
-      - "50051:50051"
+      - 8000:8000
+    environment:
+      - PORT=8000
     develop:
       watch:
         - action: rebuild
@@ -17,9 +19,12 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        SERVICE: "client"
+        SERVICE: client
     ports:
-      - "8000:8000"
+      - 8080:8080
+    environment:
+      - PORT=8080
+      - SERVER_URL=server:8000
     depends_on:
       - server
     develop:
