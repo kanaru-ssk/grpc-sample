@@ -11,4 +11,4 @@ spec:
         - image: us-central1-docker.pkg.dev/velvety-glazing-420809/grpc-sample-repo/grpc-sample-server:tag1
           ports:
             - name: h2c
-              containerPort: 8080
+              containerPort: 443
