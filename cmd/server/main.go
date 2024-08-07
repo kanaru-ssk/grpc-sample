@@ -2,17 +2,14 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
 	"net"
 
 	pb "github.com/kanaru-ssk/grpc-sample/proto"
+	"github.com/sethvargo/go-envconfig"
 	"google.golang.org/grpc"
-)
-
-var (
-	port = flag.Int("port", 50051, "The server port")
+	"google.golang.org/grpc/reflection"
 )
 
 // server is used to implement hello.GreeterServer.
@@ -26,13 +23,24 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 	return &pb.HelloReply{Message: "Hello " + in.GetName()}, nil
 }
 
+type EnvConfig struct {
+	Port int `env:"PORT"`
+}
+
 func main() {
-	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+	ctx := context.Background()
+
+	var envConfig EnvConfig
+	if err := envconfig.Process(ctx, &envConfig); err != nil {
+		log.Fatalf("failed to get env: %v", err)
+	}
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", envConfig.Port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
+	reflection.Register(s)
 	pb.RegisterGreeterServer(s, &server{})
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {

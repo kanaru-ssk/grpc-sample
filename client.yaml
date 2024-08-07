@@ -1,0 +1,14 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: grpc-sample-client
+  annotations:
+    run.googleapis.com/ingress: all
+spec:
+  template:
+    spec:
+      containers:
+        - image: us-central1-docker.pkg.dev/velvety-glazing-420809/grpc-sample-repo/grpc-sample-client:tag1
+          env:
+            - name: SERVER_URL
+              value: https://grpc-sample-server-zxzx6d5qnq-uc.a.run.app
