@@ -5,8 +5,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
+	pb "github.com/kanaru-ssk/grpc-sample/proto"
 	"github.com/sethvargo/go-envconfig"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/resolver"
 )
 
 type EnvConfig struct {
@@ -23,28 +28,29 @@ func main() {
 	}
 
 	// Set up a connection to the server.
-	// conn, err := grpc.NewClient(envConfig.ServerUrl, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	// if err != nil {
-	// 	log.Fatalf("did not connect: %v", err)
-	// }
-	// defer conn.Close()
-	// c := pb.NewGreeterClient(conn)
+	resolver.SetDefaultScheme("passthrough")
+	conn, err := grpc.NewClient(envConfig.ServerUrl, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	c := pb.NewGreeterClient(conn)
 
 	// Set up HTTP server
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		// defer cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
 
 		// Use the name from the query parameter if provided, otherwise use the default
 		nameToGreet := r.URL.Query().Get("name")
 
-		// s, err := c.SayHello(ctx, &pb.HelloRequest{Name: nameToGreet})
-		// if err != nil {
-		// 	http.Error(w, fmt.Sprintf("could not greet: %v", err), http.StatusInternalServerError)
-		// 	return
-		// }
+		s, err := c.SayHello(ctx, &pb.HelloRequest{Name: nameToGreet})
+		if err != nil {
+			http.Error(w, fmt.Sprintf("could not greet: %v", err), http.StatusInternalServerError)
+			return
+		}
 
-		fmt.Fprintf(w, "Greeting: %s", nameToGreet)
+		fmt.Fprintf(w, "Greeting: %s", s.GetMessage())
 	})
 
 	log.Println("Starting HTTP server on", fmt.Sprintf(":%d", envConfig.Port))
