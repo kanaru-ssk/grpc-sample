@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option go_package = "github.com/kanaru-ssk/grpc-sample/proto/hello";
 
-package helloworld;
+package hello;
 
 // The greeting service definition.
 service Greeter {
