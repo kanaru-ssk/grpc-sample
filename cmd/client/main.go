@@ -29,7 +29,7 @@ func main() {
 
 	// Set up a connection to the server.
 	resolver.SetDefaultScheme("passthrough")
-	conn, err := grpc.NewClient(envConfig.ServerUrl, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(envConfig.ServerUrl, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithDefaultCallOptions(grpc.WaitForReady(true)))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
