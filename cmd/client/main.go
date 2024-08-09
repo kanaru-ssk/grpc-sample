@@ -15,7 +15,7 @@ import (
 
 type EnvConfig struct {
 	Port      int    `env:"PORT,default=8080"`
-	ServerUrl string `env:"SERVER_URL,default=server:8080"`
+	ServerUrl string `env:"SERVER_URL,default=server:443"`
 }
 
 func main() {
