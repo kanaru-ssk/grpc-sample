@@ -24,7 +24,7 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 }
 
 type EnvConfig struct {
-	Port int `env:"PORT"`
+	Port int `env:"PORT,default=443"`
 }
 
 func main() {
