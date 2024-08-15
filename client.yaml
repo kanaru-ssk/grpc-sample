@@ -6,7 +6,12 @@ metadata:
     run.googleapis.com/ingress: all
 spec:
   template:
+    metadata:
+      annotations:
+        run.googleapis.com/vpc-access-egress: all-traffic
+        run.googleapis.com/network-interfaces: '[{"network":"grpc-sample-vpc","subnetwork":"grpc-sample-subnet"}]'
     spec:
+      serviceAccountName: grpc-sample-client@velvety-glazing-420809.iam.gserviceaccount.com
       containers:
         - image: us-central1-docker.pkg.dev/velvety-glazing-420809/grpc-sample-repo/grpc-sample-client:tag1
           env:
