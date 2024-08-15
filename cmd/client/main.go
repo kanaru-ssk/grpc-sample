@@ -3,19 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
-	"time"
 
-	pb "github.com/kanaru-ssk/grpc-sample/proto"
 	"github.com/sethvargo/go-envconfig"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type EnvConfig struct {
 	Port      int    `env:"PORT,default=8080"`
-	ServerUrl string `env:"SERVER_URL,default=server:443"`
+	ServerUrl string `env:"SERVER_URL,default=http://server:8081"`
 }
 
 func main() {
@@ -27,26 +24,37 @@ func main() {
 	}
 
 	// Set up a connection to the server.
-	conn, err := grpc.NewClient(envConfig.ServerUrl, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
-	defer conn.Close()
-	c := pb.NewGreeterClient(conn)
+	// conn, err := grpc.NewClient(envConfig.ServerUrl, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// if err != nil {
+	// 	log.Fatalf("did not connect: %v", err)
+	// }
+	// defer conn.Close()
+	// c := pb.NewGreeterClient(conn)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Contact the server and print out its response.
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
+		// ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		// defer cancel()
 
 		name := r.URL.Query().Get("name")
-		s, err := c.SayHello(ctx, &pb.HelloRequest{Name: name})
-		if err != nil {
-			http.Error(w, fmt.Sprintf("could not greet: %v", err), http.StatusInternalServerError)
-			return
-		}
+		// s, err := c.SayHello(ctx, &pb.HelloRequest{Name: name})
+		// if err != nil {
+		// 	http.Error(w, fmt.Sprintf("could not greet: %v", err), http.StatusInternalServerError)
+		// 	return
+		// }
 
-		fmt.Fprintf(w, "Greeting: %s", s.GetMessage())
+		resp, err := http.Get(envConfig.ServerUrl + "?name=" + name)
+		if err != nil {
+			log.Fatalf("http.Get: %v", err)
+		}
+		defer resp.Body.Close()
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalf("io.ReadAll(resp.Body): %v", err)
+		}
+		fmt.Fprintf(w, "Greeting from client: %s", body)
+
+		// fmt.Fprintf(w, "Greeting: %s", s.GetMessage())
 	})
 
 	log.Println("Starting HTTP server on", fmt.Sprintf(":%d", envConfig.Port))

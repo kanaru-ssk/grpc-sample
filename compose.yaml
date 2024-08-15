@@ -6,9 +6,9 @@ services:
       args:
         SERVICE: server
     ports:
-      - 443:443
+      - 8081:8081
     environment:
-      - PORT=443
+      - PORT=8081
     develop:
       watch:
         - action: rebuild
@@ -24,7 +24,7 @@ services:
       - 8080:8080
     environment:
       - PORT=8080
-      - SERVER_URL=server:443
+      - SERVER_URL=http://server:8081
     depends_on:
       - server
     develop:
