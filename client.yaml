@@ -16,4 +16,4 @@ spec:
         - image: us-central1-docker.pkg.dev/velvety-glazing-420809/grpc-sample-repo/grpc-sample-client:tag1
           env:
             - name: SERVER_URL
-              value: grpc-sample-server-zxzx6d5qnq-uc.a.run.app:443
+              value: grpc-sample-server-zxzx6d5qnq-uc.a.run.app
