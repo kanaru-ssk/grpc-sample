@@ -8,7 +8,7 @@ spec:
   template:
     spec:
       containers:
-        - image: us-central1-docker.pkg.dev/velvety-glazing-420809/grpc-sample-repo/grpc-sample-server:tag1
+        - image: us-central1-docker.pkg.dev/velvety-glazing-420809/grpc-sample-repo/grpc-sample-server:latest
           ports:
             - name: h2c
               containerPort: 50051

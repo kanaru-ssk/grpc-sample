@@ -13,7 +13,7 @@ spec:
     spec:
       serviceAccountName: grpc-sample-client@velvety-glazing-420809.iam.gserviceaccount.com
       containers:
-        - image: us-central1-docker.pkg.dev/velvety-glazing-420809/grpc-sample-repo/grpc-sample-client:tag1
+        - image: us-central1-docker.pkg.dev/velvety-glazing-420809/grpc-sample-repo/grpc-sample-client:latest
           env:
             - name: SERVER_URL
               value: grpc-sample-server-zxzx6d5qnq-uc.a.run.app
